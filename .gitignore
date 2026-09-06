@@ -28,3 +28,7 @@ data/profiling/*
 # Generated standardized business data
 data/standardized/*
 !data/standardized/.gitkeep
+
+# Business reference data
+data/reference/*
+!data/reference/.gitkeep
