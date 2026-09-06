@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment variables / secrets
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Raw business data
+data/raw/*
+!data/raw/.gitkeep
+
+
+# Generated profiling containing business metadata
+data/profiling/*
+!data/profiling/.gitkeep
+
+
+# Generated standardized business data
+data/standardized/*
+!data/standardized/.gitkeep
