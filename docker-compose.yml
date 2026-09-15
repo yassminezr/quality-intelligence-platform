@@ -15,6 +15,12 @@ services:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       PYTHONPATH: /opt/airflow/project
 
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: quality_intelligence
+      POSTGRES_USER: qip_user
+      POSTGRES_PASSWORD: qip_password
+
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./:/opt/airflow/project
@@ -47,6 +53,12 @@ services:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       PYTHONPATH: /opt/airflow/project
 
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: quality_intelligence
+      POSTGRES_USER: qip_user
+      POSTGRES_PASSWORD: qip_password
+
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./:/opt/airflow/project
@@ -72,6 +84,12 @@ services:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       PYTHONPATH: /opt/airflow/project
 
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: quality_intelligence
+      POSTGRES_USER: qip_user
+      POSTGRES_PASSWORD: qip_password
+
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./:/opt/airflow/project
@@ -79,6 +97,32 @@ services:
 
     command: scheduler
 
+  postgres:
+    image: postgres:16
+
+    container_name: qip-postgres
+
+    environment:
+      POSTGRES_DB: quality_intelligence
+      POSTGRES_USER: qip_user
+      POSTGRES_PASSWORD: qip_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U qip_user -d quality_intelligence"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   airflow-data:
+  postgres-data:
