@@ -1,0 +1,75 @@
+[0m20:55:33.805750 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8DE949AF0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8E1727080>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8DF56CA10>]}
+
+
+============================== 20:55:33.813433 | f05cb193-b614-4d02-9e18-e995495e866b ==============================
+[0m20:55:33.813433 [info ] [MainThread]: Running with dbt=1.10.23
+[0m20:55:33.813433 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'C:\\Users\\hp\\.dbt', 'invocation_command': 'dbt init qip_analytics', 'use_colors': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'log_path': 'logs'}
+[0m20:55:33.832429 [warn ] [MainThread]: [[33mWARNING[0m]: This version of dbt is deprecated and no longer receives regular patches, including for known bugs. Please upgrade to a newer supported version of dbt for new projects: https://docs.getdbt.com/docs/dbt-versions?utm_source=dbt-cli
+[0m20:55:33.832429 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'deprecated_version_invocation', 'label': 'f05cb193-b614-4d02-9e18-e995495e866b', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8E1F20440>]}
+[0m20:55:33.835070 [info ] [MainThread]: Creating dbt configuration folder at C:\Users\hp\.dbt
+[0m20:55:33.838076 [debug] [MainThread]: Starter project path: C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\include\starter_project
+[0m20:55:33.872801 [info ] [MainThread]: 
+Your new dbt project "qip_analytics" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m20:55:33.872801 [info ] [MainThread]: Setting up your profile.
+[0m20:56:05.397580 [error] [MainThread]: Encountered an error:
+
+[0m20:56:05.398587 [error] [MainThread]: Traceback (most recent call last):
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\cli\requires.py", line 183, in wrapper
+    result, success = func(*args, **kwargs)
+                      ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\cli\requires.py", line 133, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\cli\main.py", line 483, in init
+    results = task.run()
+              ^^^^^^^^^^
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\task\init.py", line 349, in run
+    self.setup_profile(profile_name)
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\task\init.py", line 263, in setup_profile
+    self.create_profile_from_target(adapter, profile_name=profile_name)
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\task\init.py", line 180, in create_profile_from_target
+    self.create_profile_from_profile_template(profile_template, profile_name)
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\task\init.py", line 164, in create_profile_from_profile_template
+    target = self.generate_target_from_input(prompts, initial_target)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\dbt\task\init.py", line 130, in generate_target_from_input
+    target[key] = click.prompt(
+                  ^^^^^^^^^^^^^
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\click\termui.py", line 262, in prompt
+    value = prompt_func(prompt)
+            ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\Desktop\stage 2A-Quality Intelligence Platform\quality-intelligence-platform\.venv\Lib\site-packages\click\termui.py", line 245, in prompt_func
+    raise Abort() from None
+click.exceptions.Abort
+
+[0m20:56:05.402469 [debug] [MainThread]: Command `dbt init` failed at 20:56:05.402469 after 31.83 seconds
+[0m20:56:05.403397 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8E1B0E570>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8E361AFC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D8E22B7D70>]}
+[0m20:56:05.403397 [debug] [MainThread]: Flushing usage events
+[0m20:56:06.404616 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m20:56:14.281553 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B5960B30>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B8025700>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B8292330>]}
+
+
+============================== 20:56:14.283396 | 465e3e84-d2e1-4242-b9bc-93679a8447e2 ==============================
+[0m20:56:14.283396 [info ] [MainThread]: Running with dbt=1.10.23
+[0m20:56:14.283396 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'C:\\Users\\hp\\.dbt', 'use_colors': 'True', 'indirect_selection': 'eager', 'invocation_command': 'dbt init qip_analytics', 'use_experimental_parser': 'False', 'log_path': 'logs'}
+[0m20:56:14.303253 [warn ] [MainThread]: [[33mWARNING[0m]: This version of dbt is deprecated and no longer receives regular patches, including for known bugs. Please upgrade to a newer supported version of dbt for new projects: https://docs.getdbt.com/docs/dbt-versions?utm_source=dbt-cli
+[0m20:56:14.303253 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'deprecated_version_invocation', 'label': '465e3e84-d2e1-4242-b9bc-93679a8447e2', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B6099430>]}
+[0m20:56:14.304692 [info ] [MainThread]: A project called qip_analytics already exists here.
+[0m20:56:14.305335 [debug] [MainThread]: Command `dbt init` succeeded at 20:56:14.305335 after 0.14 seconds
+[0m20:56:14.306362 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B862F320>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B6099430>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000238B8292330>]}
+[0m20:56:14.306362 [debug] [MainThread]: Flushing usage events
+[0m20:56:15.054196 [debug] [MainThread]: An error was encountered while trying to flush usage events

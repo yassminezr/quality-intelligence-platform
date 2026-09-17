@@ -1,0 +1,68 @@
+version: 2
+
+sources:
+
+  - name: core
+    database: quality_intelligence
+    schema: core
+
+    description: >
+      Modèle métier PostgreSQL construit
+      par le pipeline Data Engineering.
+
+    tables:
+
+      - name: account
+        description: Référentiel des comptes.
+
+      - name: campaign
+        description: Référentiel des campagnes d'audit.
+
+      - name: audit
+        description: >
+          Audit d'un compte pour une campagne.
+
+      - name: iso_clause
+        description: Référentiel des clauses ISO.
+
+      - name: iso_control
+        description: >
+          Contrôles terrain rattachés aux clauses ISO.
+
+      - name: evaluation
+        description: >
+          Résultat courant d'une évaluation d'audit.
+
+      - name: finding
+        description: >
+          Classification du constat associé à une évaluation.
+
+      - name: corrective_action
+        description: >
+          Action corrective associée à un finding.
+
+      - name: audit_status_validation
+        description: >
+          Historique des validations officielles de statut.
+
+      - name: evaluation_history
+        description: >
+          Historique des versions d'évaluation.
+
+      - name: corrective_action_status_history
+        description: >
+          Historique des changements de statut des actions.
+
+
+  - name: quality
+    database: quality_intelligence
+    schema: quality
+
+    description: >
+      Résultats de la couche Data Quality.
+
+    tables:
+
+      - name: dq_issues
+        description: >
+          Anomalies Data Quality détectées pour chaque batch.

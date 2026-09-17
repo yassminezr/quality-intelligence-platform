@@ -1,0 +1,152 @@
+version: 2
+
+models:
+
+  - name: stg_accounts
+    columns:
+      - name: account_id
+        tests:
+          - not_null
+          - unique
+
+      - name: account_name
+        tests:
+          - not_null
+          - unique
+
+
+  - name: stg_campaigns
+    columns:
+      - name: campaign_id
+        tests:
+          - not_null
+          - unique
+
+      - name: campaign_name
+        tests:
+          - not_null
+          - unique
+
+
+  - name: stg_audits
+    columns:
+      - name: audit_id
+        tests:
+          - not_null
+          - unique
+
+      - name: account_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_accounts')
+                field: account_id
+
+      - name: campaign_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_campaigns')
+                field: campaign_id
+
+
+  - name: stg_iso_clauses
+    columns:
+      - name: clause_id
+        tests:
+          - not_null
+          - unique
+
+      - name: clause_iso
+        tests:
+          - not_null
+          - unique
+
+
+  - name: stg_iso_controls
+    columns:
+      - name: control_id
+        tests:
+          - not_null
+          - unique
+
+      - name: clause_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_iso_clauses')
+                field: clause_id
+
+
+  - name: stg_evaluations
+    columns:
+      - name: evaluation_id
+        tests:
+          - not_null
+          - unique
+
+      - name: audit_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_audits')
+                field: audit_id
+
+      - name: control_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_iso_controls')
+                field: control_id
+
+
+  - name: stg_findings
+    columns:
+      - name: finding_id
+        tests:
+          - not_null
+          - unique
+
+      - name: evaluation_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_evaluations')
+                field: evaluation_id
+
+      - name: categorie_finding
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "NC Mineure"
+                  - "NC Majeure"
+                  - "Bonne Pratique"
+                  - "OFI"
+                  - "Observation"
+                  - "NA"
+
+
+  - name: stg_corrective_actions
+    columns:
+      - name: action_id
+        tests:
+          - not_null
+          - unique
+
+      - name: finding_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_findings')
+                field: finding_id

@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+import subprocess
 
 from airflow import DAG
-from airflow.exceptions import (
-    AirflowSkipException,
-)
-from airflow.operators.python import (
-    PythonOperator,
-)
+from airflow.exceptions import AirflowSkipException
+from airflow.operators.python import PythonOperator
 
 from src.common.config import (
     CURRENT_CAMPAIGN,
@@ -55,7 +52,7 @@ from src.modeling.load_audit_validations import (
 
 
 # =====================================================
-# Helper
+# Helper — Batch ID
 # =====================================================
 
 def get_batch_id(context):
@@ -74,6 +71,44 @@ def get_batch_id(context):
         )
 
     return batch_id
+
+
+# =====================================================
+# Helper — dbt
+# =====================================================
+
+def run_dbt_command(command: str):
+    """
+    Exécute une commande dbt dans le projet analytics.
+    """
+
+    project_dir = (
+        "/opt/airflow/project/analytics/qip_analytics"
+    )
+
+    result = subprocess.run(
+        [
+            "dbt",
+            command,
+            "--project-dir",
+            project_dir,
+            "--profiles-dir",
+            project_dir,
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    print(result.stdout)
+
+    if result.stderr:
+        print(result.stderr)
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"dbt {command} failed with exit code "
+            f"{result.returncode}"
+        )
 
 
 # =====================================================
@@ -314,9 +349,7 @@ def load_core_evaluations(**context):
 
     print(
         "Action status changes:",
-        result[
-            "action_status_changes"
-        ],
+        result["action_status_changes"],
     )
 
 
@@ -353,6 +386,24 @@ def load_core_validations():
 
 
 # =====================================================
+# Task 9 — dbt Models
+# =====================================================
+
+def run_dbt_models():
+
+    run_dbt_command("run")
+
+
+# =====================================================
+# Task 10 — dbt Tests
+# =====================================================
+
+def run_dbt_tests():
+
+    run_dbt_command("test")
+
+
+# =====================================================
 # DAG
 # =====================================================
 
@@ -361,8 +412,8 @@ with DAG(
 
     description=(
         "End-to-end QHC ingestion, "
-        "Data Quality and PostgreSQL "
-        "loading pipeline"
+        "Data Quality, PostgreSQL loading "
+        "and dbt transformation pipeline"
     ),
 
     start_date=datetime(
@@ -380,69 +431,104 @@ with DAG(
         "quality",
         "postgresql",
         "data-quality",
+        "dbt",
     ],
 
 ) as dag:
+
+    # -------------------------------------------------
+    # Task 1 — Ingestion
+    # -------------------------------------------------
 
     ingest_qhc_file = PythonOperator(
         task_id="ingest_qhc_file",
         python_callable=run_qhc_ingestion,
     )
 
-    run_data_quality_task = (
-        PythonOperator(
-            task_id="run_data_quality",
-            python_callable=(
-                run_qhc_data_quality
-            ),
-        )
+    # -------------------------------------------------
+    # Task 2 — Data Quality
+    # -------------------------------------------------
+
+    run_data_quality_task = PythonOperator(
+        task_id="run_data_quality",
+        python_callable=run_qhc_data_quality,
     )
+
+    # -------------------------------------------------
+    # Task 3 — PostgreSQL Staging
+    # -------------------------------------------------
 
     load_staging_task = PythonOperator(
         task_id="load_postgres_staging",
-        python_callable=(
-            load_postgres_staging
-        ),
+        python_callable=load_postgres_staging,
     )
+
+    # -------------------------------------------------
+    # Task 4 — PostgreSQL DQ
+    # -------------------------------------------------
 
     load_dq_task = PythonOperator(
         task_id="load_postgres_dq",
-        python_callable=(
-            load_postgres_dq
-        ),
+        python_callable=load_postgres_dq,
     )
+
+    # -------------------------------------------------
+    # Task 5 — Core Audits
+    # -------------------------------------------------
 
     load_audits_task = PythonOperator(
         task_id="load_core_audits",
-        python_callable=(
-            load_core_audits
-        ),
+        python_callable=load_core_audits,
     )
+
+    # -------------------------------------------------
+    # Task 6 — ISO Reference
+    # -------------------------------------------------
 
     load_iso_task = PythonOperator(
         task_id="load_core_iso",
-        python_callable=(
-            load_core_iso
-        ),
+        python_callable=load_core_iso,
     )
 
-    load_evaluations_task = (
-        PythonOperator(
-            task_id="load_core_evaluations",
-            python_callable=(
-                load_core_evaluations
-            ),
-        )
+    # -------------------------------------------------
+    # Task 7 — Evaluations
+    # -------------------------------------------------
+
+    load_evaluations_task = PythonOperator(
+        task_id="load_core_evaluations",
+        python_callable=load_core_evaluations,
     )
 
-    load_validations_task = (
-        PythonOperator(
-            task_id="load_core_validations",
-            python_callable=(
-                load_core_validations
-            ),
-        )
+    # -------------------------------------------------
+    # Task 8 — Official Validations
+    # -------------------------------------------------
+
+    load_validations_task = PythonOperator(
+        task_id="load_core_validations",
+        python_callable=load_core_validations,
     )
+
+    # -------------------------------------------------
+    # Task 9 — dbt Run
+    # -------------------------------------------------
+
+    dbt_models_task = PythonOperator(
+        task_id="run_dbt_models",
+        python_callable=run_dbt_models,
+    )
+
+    # -------------------------------------------------
+    # Task 10 — dbt Test
+    # -------------------------------------------------
+
+    dbt_tests_task = PythonOperator(
+        task_id="run_dbt_tests",
+        python_callable=run_dbt_tests,
+    )
+
+    # =================================================
+    # Pipeline Dependencies
+    # =================================================
 
     (
         ingest_qhc_file
@@ -453,4 +539,6 @@ with DAG(
         >> load_iso_task
         >> load_evaluations_task
         >> load_validations_task
+        >> dbt_models_task
+        >> dbt_tests_task
     )

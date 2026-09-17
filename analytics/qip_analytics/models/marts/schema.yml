@@ -1,0 +1,209 @@
+version: 2
+
+models:
+
+  - name: mart_audit_overview
+    description: >
+      Vue synthétique au niveau audit / compte / campagne.
+      Sert principalement à la page de synthèse Power BI
+      et aux KPI globaux.
+
+    columns:
+
+      - name: audit_id
+        description: Identifiant technique unique de l'audit.
+        tests:
+          - not_null
+          - unique
+
+      - name: account_id
+        description: Identifiant technique du compte.
+        tests:
+          - not_null
+
+      - name: account_name
+        description: Nom du compte audité.
+        tests:
+          - not_null
+
+      - name: campaign_id
+        description: Identifiant de la campagne d'audit.
+        tests:
+          - not_null
+
+      - name: campaign_name
+        description: Nom de la campagne, par exemple FY27.
+
+      - name: completion_rate
+        description: >
+          Taux de complétude calculé à partir des
+          contrôles applicables au compte.
+        tests:
+          - not_null
+
+      - name: current_proposed_status
+        description: >
+          Statut proposé automatiquement par la plateforme.
+
+      - name: official_audit_status
+        description: >
+          Statut officiellement validé par l'équipe Qualité.
+          Peut être NULL tant qu'aucune validation n'a été fournie.
+
+      - name: avg_maturity_score
+        description: >
+          Score moyen de maturité calculé uniquement
+          sur les évaluations disposant d'un score.
+
+      - name: account_badge
+        description: >
+          Catégorie de maturité du compte dérivée
+          du score moyen.
+
+      - name: total_findings_kpi
+        description: >
+          Nombre de findings comptabilisés dans le KPI,
+          hors Bonne Pratique et NA.
+
+      - name: open_action_count
+        description: Nombre d'actions correctives non clôturées.
+
+      - name: escalated_action_count
+        description: >
+          Nombre d'actions classées Escalade management.
+
+
+  - name: mart_account_clause_detail
+    description: >
+      Vue détaillée de chaque compte par clause ISO.
+      Une ligne correspond à un audit, un compte
+      et un contrôle ISO. Les clauses non évaluées
+      sont conservées avec des résultats NULL.
+
+    columns:
+
+      - name: audit_id
+        tests:
+          - not_null
+
+      - name: account_id
+        tests:
+          - not_null
+
+      - name: account_name
+        description: Compte auquel appartient la ligne.
+        tests:
+          - not_null
+
+      - name: control_id
+        tests:
+          - not_null
+
+      - name: clause_iso
+        description: Référence officielle de la clause ISO.
+        tests:
+          - not_null
+
+      - name: evaluation_started
+        description: >
+          TRUE lorsqu'une évaluation existe dans le Core.
+
+      - name: clause_scored
+        description: >
+          TRUE lorsqu'un score de maturité est renseigné.
+
+      - name: categorie_finding
+        description: >
+          Catégorie du finding lorsqu'elle est disponible.
+
+      - name: age_jours
+        description: >
+          Ancienneté calculée de l'action corrective.
+
+      - name: indicateur_age
+        description: >
+          Normal, Alerte, Critique ou Escalade management.
+
+
+  - name: mart_findings
+    description: >
+      Mart dédié à l'analyse des findings par compte,
+      campagne et clause ISO.
+
+    columns:
+
+      - name: finding_id
+        tests:
+          - not_null
+          - unique
+
+      - name: account_name
+        tests:
+          - not_null
+
+      - name: categorie_finding
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "NC Mineure"
+                  - "NC Majeure"
+                  - "Bonne Pratique"
+                  - "OFI"
+                  - "Observation"
+                  - "NA"
+
+      - name: is_counted_in_total_findings
+        description: >
+          TRUE si le finding doit être inclus
+          dans le KPI Total Findings.
+
+
+  - name: mart_corrective_actions
+    description: >
+      Mart de suivi des actions correctives et de leur ancienneté.
+
+    columns:
+
+      - name: action_id
+        tests:
+          - not_null
+          - unique
+
+      - name: account_name
+        tests:
+          - not_null
+
+      - name: finding_id
+        tests:
+          - not_null
+
+      - name: age_jours
+        description: >
+          Nombre de jours depuis le début de l'action,
+          figé à la date de clôture lorsqu'elle est clôturée.
+
+      - name: indicateur_age
+        description: >
+          Classe SLA de l'action corrective.
+
+      - name: requires_attention
+        description: >
+          TRUE pour les actions critiques ou en escalade.
+
+
+  - name: mart_maturity_distribution
+    description: >
+      Distribution des évaluations par niveau
+      et score de maturité.
+
+    columns:
+
+      - name: account_id
+        tests:
+          - not_null
+
+      - name: score_maturite
+        tests:
+          - not_null
