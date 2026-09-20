@@ -212,6 +212,11 @@ def render_sidebar():
             icon="🔎",
             use_container_width=True,
         )
+        st.page_link(
+            "pages/5_Monitoring_Escalades.py",
+            label="Monitoring & Escalades",
+            icon="🚨",
+        )
 
         st.divider()
 

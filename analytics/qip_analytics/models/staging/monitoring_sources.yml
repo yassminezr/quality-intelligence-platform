@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+
+  - name: monitoring
+    description: >
+      Tables techniques produites par le moteur
+      de monitoring des actions correctives.
+
+    schema: monitoring
+
+    tables:
+
+      - name: monitoring_run_log
+        description: >
+          Historique des exécutions globales
+          du service de monitoring.
+
+      - name: action_monitoring_log
+        description: >
+          Historique des changements de niveau
+          de surveillance des actions correctives.

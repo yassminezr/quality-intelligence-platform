@@ -4,10 +4,10 @@ qip_analytics:
   outputs:
     dev:
       type: postgres
-      host: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
       port: 5432
-      user: qip_user
-      password: qip_password
-      dbname: quality_intelligence
+      user: "{{ env_var('POSTGRES_USER', 'qip_user') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'qip_password') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'quality_intelligence') }}"
       schema: analytics
       threads: 4

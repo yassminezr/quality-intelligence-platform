@@ -207,3 +207,107 @@ models:
       - name: score_maturite
         tests:
           - not_null
+
+
+  - name: mart_monitoring_runs
+    description: >
+      Historique analytique des exécutions du moteur
+      de monitoring des actions correctives.
+      Une ligne correspond à une exécution du monitoring.
+
+    columns:
+
+      - name: run_id
+        description: Identifiant technique unique du run.
+        tests:
+          - not_null
+          - unique
+
+      - name: started_at
+        description: Date et heure de démarrage du run.
+        tests:
+          - not_null
+
+      - name: status
+        description: Statut technique de l'exécution.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "running"
+                  - "success"
+                  - "failed"
+
+      - name: actions_evaluated
+        description: Nombre d'actions évaluées pendant le run.
+        tests:
+          - not_null
+
+      - name: events_detected
+        description: Nombre de changements de niveau détectés.
+        tests:
+          - not_null
+
+      - name: messages_prepared
+        description: Nombre de messages d'alerte préparés.
+        tests:
+          - not_null
+
+      - name: emails_sent
+        description: Nombre d'emails envoyés avec succès.
+        tests:
+          - not_null
+
+      - name: emails_failed
+        description: Nombre de tentatives d'envoi en échec.
+        tests:
+          - not_null
+
+      - name: duration_seconds
+        description: >
+          Durée technique de l'exécution en secondes.
+          Peut être NULL tant qu'un run n'est pas terminé.
+
+
+  - name: mart_action_monitoring_history
+    description: >
+      Historique analytique des changements de niveau
+      détectés pour les actions correctives.
+      Une ligne correspond à un changement de niveau
+      enregistré par le moteur de monitoring.
+
+    columns:
+
+      - name: monitoring_log_id
+        description: Identifiant technique unique de l'événement.
+        tests:
+          - not_null
+          - unique
+
+      - name: action_id
+        description: Identifiant de l'action corrective concernée.
+        tests:
+          - not_null
+
+      - name: age_jours
+        description: >
+          Âge de l'action au moment où le changement
+          de niveau a été détecté.
+
+      - name: niveau_escalade
+        description: >
+          Niveau calculé par le moteur déterministe.
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - "normal"
+                  - "alerte"
+                  - "critique"
+                  - "escalade_management"
+
+      - name: monitored_at
+        description: Date et heure de détection du changement.
+        tests:
+          - not_null

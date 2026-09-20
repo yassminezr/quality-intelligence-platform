@@ -32,3 +32,5 @@ data/standardized/*
 # Business reference data
 data/reference/*
 !data/reference/.gitkeep
+
+.env

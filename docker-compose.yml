@@ -1,5 +1,33 @@
 services:
 
+  postgres:
+    image: postgres:16
+    container_name: qip-postgres
+
+    environment:
+      POSTGRES_DB: quality_intelligence
+      POSTGRES_USER: qip_user
+      POSTGRES_PASSWORD: qip_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U qip_user -d quality_intelligence"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    restart: unless-stopped
+
+
   airflow-init:
     build:
       context: .
@@ -8,6 +36,10 @@ services:
     image: qip-airflow:2.10.5
 
     container_name: qip-airflow-init
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
     environment:
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
@@ -38,12 +70,15 @@ services:
       --email admin@example.com
       "
 
+
   airflow-webserver:
     image: qip-airflow:2.10.5
 
     container_name: qip-airflow-webserver
 
     depends_on:
+      postgres:
+        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
 
@@ -69,12 +104,17 @@ services:
 
     command: webserver
 
+    restart: unless-stopped
+
+
   airflow-scheduler:
     image: qip-airflow:2.10.5
 
     container_name: qip-airflow-scheduler
 
     depends_on:
+      postgres:
+        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
 
@@ -97,37 +137,19 @@ services:
 
     command: scheduler
 
-  postgres:
-    image: postgres:16
+    restart: unless-stopped
 
-    container_name: qip-postgres
 
-    environment:
-      POSTGRES_DB: quality_intelligence
-      POSTGRES_USER: qip_user
-      POSTGRES_PASSWORD: qip_password
-
-    ports:
-      - "5432:5432"
-
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U qip_user -d quality_intelligence"
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
   streamlit:
     build:
       context: .
       dockerfile: Dockerfile.streamlit
 
     container_name: qip_streamlit
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
     environment:
       POSTGRES_HOST: postgres
@@ -139,10 +161,8 @@ services:
     ports:
       - "8501:8501"
 
-    depends_on:
-      - postgres
-
     restart: unless-stopped
+
 
 volumes:
   airflow-data:
