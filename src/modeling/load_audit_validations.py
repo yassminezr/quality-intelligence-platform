@@ -1,234 +1,162 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
-import pandas as pd
-
-from src.common.database import (
-    get_postgres_connection,
-)
+from src.common.database import get_postgres_connection
 
 
-VALID_AUDIT_STATUSES = {
-    "non_audite",
-    "en_cours",
-    "audite",
-}
+def get_latest_success_batch_id() -> str:
+    with get_postgres_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT batch_id
+                FROM metadata.ingestion_batch
+                WHERE status = 'SUCCESS'
+                ORDER BY ingestion_timestamp DESC
+                LIMIT 1
+                """
+            )
 
+            row = cur.fetchone()
 
-def normalize_text(value):
-    """
-    Retourne un texte propre ou None.
-    """
+            if row is None:
+                raise ValueError(
+                    "Aucun batch SUCCESS trouvé."
+                )
 
-    if pd.isna(value):
-        return None
-
-    value = str(value).strip()
-
-    if value == "":
-        return None
-
-    return value
-
-
-def normalize_datetime(value):
-    """
-    Convertit une date en datetime.
-
-    Une valeur vide ou invalide retourne None.
-    """
-
-    value = normalize_text(value)
-
-    if value is None:
-        return None
-
-    parsed = pd.to_datetime(
-        value,
-        errors="coerce",
-    )
-
-    if pd.isna(parsed):
-        return None
-
-    return parsed.to_pydatetime()
+            return str(row[0])
 
 
 def load_audit_validations(
-    csv_path: Path,
-    campaign_name: str,
+    batch_id: str,
 ) -> dict[str, int]:
 
-    if not csv_path.exists():
-        raise FileNotFoundError(
-            f"Validation file not found: "
-            f"{csv_path}"
-        )
+    updated = 0
+    unchanged = 0
 
-    dataframe = pd.read_csv(
-        csv_path,
-        encoding="utf-8-sig",
-    )
+    with get_postgres_connection() as conn:
+        with conn.cursor() as cur:
 
-    required_columns = {
-        "source_sheet",
-        "statut_valide",
-    }
+            # -----------------------------------------
+            # Campagne associée au batch
+            # -----------------------------------------
 
-    missing_columns = (
-        required_columns
-        - set(dataframe.columns)
-    )
-
-    if missing_columns:
-        raise ValueError(
-            "Missing required columns: "
-            + ", ".join(
-                sorted(missing_columns)
-            )
-        )
-
-    # Colonnes facultatives
-    if "date_validation" not in dataframe.columns:
-        dataframe["date_validation"] = None
-
-    if "valide_par" not in dataframe.columns:
-        dataframe["valide_par"] = None
-
-    connection = get_postgres_connection()
-
-    updated_count = 0
-    history_count = 0
-    unchanged_count = 0
-
-    try:
-        with connection.cursor() as cursor:
-
-            # -----------------------------
-            # Campaign
-            # -----------------------------
-
-            cursor.execute(
+            cur.execute(
                 """
-                SELECT campaign_id
-                FROM core.campaign
-                WHERE campaign_name = %s;
+                SELECT campaign
+                FROM metadata.ingestion_batch
+                WHERE batch_id = %s
                 """,
-                (campaign_name,),
+                (batch_id,),
             )
 
-            result = cursor.fetchone()
+            row = cur.fetchone()
 
-            if result is None:
+            if row is None:
                 raise ValueError(
-                    f"Campaign not found: "
-                    f"{campaign_name}"
+                    f"Batch introuvable : {batch_id}"
                 )
 
-            campaign_id = result[0]
+            campaign_name = row[0]
 
-            # -----------------------------
-            # Parcourir validations
-            # -----------------------------
+            # -----------------------------------------
+            # Statuts officiels du snapshot
+            # -----------------------------------------
 
-            for row in dataframe.itertuples(
-                index=False
-            ):
-
-                account_name = normalize_text(
-                    row.source_sheet
-                )
-
-                validated_status = normalize_text(
-                    row.statut_valide
-                )
-
-                validation_date = normalize_datetime(
-                    row.date_validation
-                )
-
-                validated_by = normalize_text(
-                    row.valide_par
-                )
-
-                if account_name is None:
-                    continue
-
-                if (
+            cur.execute(
+                """
+                SELECT
+                    account_name,
+                    source_status,
                     validated_status
-                    not in VALID_AUDIT_STATUSES
-                ):
-                    raise ValueError(
-                        f"Invalid validated status "
-                        f"for {account_name}: "
-                        f"{validated_status}"
-                    )
+                FROM staging.audit_status_snapshot
+                WHERE batch_id = %s
+                ORDER BY account_name
+                """,
+                (batch_id,),
+            )
 
-                # -----------------------------
-                # Trouver l'audit
-                # -----------------------------
+            statuses = cur.fetchall()
 
-                cursor.execute(
+            if not statuses:
+                raise ValueError(
+                    "Aucun statut trouvé dans "
+                    "staging.audit_status_snapshot "
+                    f"pour le batch {batch_id}"
+                )
+
+            for (
+                account_name,
+                source_status,
+                validated_status,
+            ) in statuses:
+
+                # -----------------------------------------
+                # Audit du compte pour la campagne
+                # -----------------------------------------
+
+                cur.execute(
                     """
                     SELECT
-                        au.audit_id,
-                        au.current_proposed_status,
-                        au.current_validated_status
-
-                    FROM core.audit au
+                        a.audit_id,
+                        a.current_proposed_status,
+                        a.current_validated_status
+                    FROM core.audit a
 
                     JOIN core.account acc
-                        ON acc.account_id =
-                           au.account_id
+                        ON acc.account_id = a.account_id
+
+                    JOIN core.campaign c
+                        ON c.campaign_id = a.campaign_id
 
                     WHERE
                         acc.account_name = %s
-                        AND au.campaign_id = %s;
+                        AND c.campaign_name = %s
                     """,
                     (
                         account_name,
-                        campaign_id,
+                        campaign_name,
                     ),
                 )
 
-                audit = cursor.fetchone()
+                audit = cur.fetchone()
 
                 if audit is None:
                     raise ValueError(
-                        f"Audit not found for "
-                        f"{account_name} / "
-                        f"{campaign_name}"
+                        "Audit introuvable pour "
+                        f"{account_name} / {campaign_name}"
                     )
 
-                audit_id = audit[0]
-                proposed_status = audit[1]
-                current_validated_status = audit[2]
+                (
+                    audit_id,
+                    proposed_status,
+                    current_validated_status,
+                ) = audit
 
-                # -----------------------------
+                # -----------------------------------------
                 # Aucun changement
-                # -----------------------------
+                # -----------------------------------------
 
                 if (
                     current_validated_status
                     == validated_status
                 ):
-                    unchanged_count += 1
+                    unchanged += 1
                     continue
 
-                # -----------------------------
-                # Mise à jour statut officiel
-                # -----------------------------
+                # -----------------------------------------
+                # Mise à jour du statut courant
+                # -----------------------------------------
 
-                cursor.execute(
+                cur.execute(
                     """
                     UPDATE core.audit
                     SET
                         current_validated_status = %s,
                         status_last_updated_at = NOW(),
                         updated_at = NOW()
-                    WHERE audit_id = %s;
+                    WHERE audit_id = %s
                     """,
                     (
                         validated_status,
@@ -236,106 +164,88 @@ def load_audit_validations(
                     ),
                 )
 
-                updated_count += 1
+                # -----------------------------------------
+                # Historique
+                # -----------------------------------------
+                #
+                # validation_date reste NULL car le fichier
+                # ne fournit pas la date réelle de validation
+                # humaine.
+                #
+                # created_at enregistre automatiquement
+                # le moment où le pipeline a observé
+                # le changement.
+                # -----------------------------------------
 
-                # -----------------------------
-                # Historique validation
-                # -----------------------------
-
-                cursor.execute(
+                cur.execute(
                     """
-                    INSERT INTO
-                        core.audit_status_validation (
-                            audit_id,
-                            proposed_status,
-                            validated_status,
-                            validation_date,
-                            validated_by
-                        )
+                    INSERT INTO core.audit_status_validation (
+                        audit_id,
+                        proposed_status,
+                        validated_status,
+                        validation_date,
+                        validated_by
+                    )
                     VALUES (
                         %s,
                         %s,
                         %s,
-                        %s,
+                        NULL,
                         %s
-                    );
+                    )
                     """,
                     (
                         audit_id,
                         proposed_status,
                         validated_status,
-                        validation_date,
-                        validated_by,
+                        "DASHBOARD AUDITS",
                     ),
                 )
 
-                history_count += 1
+                updated += 1
 
-        connection.commit()
-
-    except Exception:
-        connection.rollback()
-        raise
-
-    finally:
-        connection.close()
+        conn.commit()
 
     return {
-        "updated": updated_count,
-        "history_created": history_count,
-        "unchanged": unchanged_count,
+        "updated": updated,
+        "unchanged": unchanged,
+        "total": updated + unchanged,
     }
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description=(
-            "Load official audit status "
-            "validations into PostgreSQL core."
-        )
-    )
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--input",
-        required=True,
-        type=Path,
+        "--batch-id",
+        required=False,
     )
 
-    parser.add_argument(
-        "--campaign",
-        required=True,
+    args = parser.parse_args()
+
+    batch_id = (
+        args.batch_id
+        if args.batch_id
+        else get_latest_success_batch_id()
     )
-
-    return parser.parse_args()
-
-
-def main():
-    args = parse_arguments()
 
     result = load_audit_validations(
-        csv_path=args.input,
-        campaign_name=args.campaign,
+        batch_id=batch_id
     )
 
     print(
-        "Audit validation loading completed."
+        f"Batch : {batch_id}"
     )
 
     print(
-        "Updated audits:",
-        result["updated"],
+        f"Statuts traités : {result['total']}"
     )
 
     print(
-        "History rows created:",
-        result["history_created"],
+        f"Statuts modifiés : {result['updated']}"
     )
 
     print(
-        "Unchanged audits:",
-        result["unchanged"],
+        f"Statuts inchangés : {result['unchanged']}"
     )
-
-
-if __name__ == "__main__":
-    main()

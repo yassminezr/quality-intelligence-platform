@@ -11,7 +11,6 @@ from src.common.config import (
     CURRENT_CAMPAIGN,
     INCOMING_DIR,
     STANDARDIZED_DIR,
-    REFERENCE_DIR,
 )
 
 from src.ingestion.incoming_file import (
@@ -24,6 +23,10 @@ from src.ingestion.run_ingestion import (
 
 from src.ingestion.postgres_loader import (
     load_standardized_batch,
+)
+
+from src.ingestion.postgres_audit_status_loader import (
+    load_audit_status_snapshot,
 )
 
 from src.quality.run_data_quality import (
@@ -259,7 +262,36 @@ def load_postgres_dq(**context):
 
 
 # =====================================================
-# Task 5 — Account / Campaign / Audit
+# Task 5 — Official Audit Status Snapshot
+# =====================================================
+
+def load_audit_status_snapshot_task(**context):
+    """
+    Extrait les statuts officiels depuis la feuille
+    DASHBOARD AUDITS et les charge dans PostgreSQL staging.
+    """
+
+    batch_id = get_batch_id(
+        context
+    )
+
+    incoming_file = find_incoming_excel(
+        INCOMING_DIR
+    )
+
+    loaded_statuses = load_audit_status_snapshot(
+        excel_file=incoming_file,
+        batch_id=batch_id,
+    )
+
+    print(
+        "Official audit statuses loaded:",
+        loaded_statuses,
+    )
+
+
+# =====================================================
+# Task 6 — Account / Campaign / Audit
 # =====================================================
 
 def load_core_audits(**context):
@@ -284,7 +316,7 @@ def load_core_audits(**context):
 
 
 # =====================================================
-# Task 6 — ISO Reference
+# Task 7 — ISO Reference
 # =====================================================
 
 def load_core_iso(**context):
@@ -309,7 +341,7 @@ def load_core_iso(**context):
 
 
 # =====================================================
-# Task 7 — Evaluations / Findings / Actions
+# Task 8 — Evaluations / Findings / Actions
 # =====================================================
 
 def load_core_evaluations(**context):
@@ -354,39 +386,43 @@ def load_core_evaluations(**context):
 
 
 # =====================================================
-# Task 8 — Official Audit Validations
+# Task 9 — Official Audit Validations
 # =====================================================
 
-def load_core_validations():
+def load_core_validations(**context):
+    """
+    Met à jour le statut officiel courant des audits
+    depuis staging.audit_status_snapshot.
 
-    validation_file = (
-        REFERENCE_DIR
-        / "account_status_validations.csv"
+    DASHBOARD AUDITS est désormais la source officielle.
+    """
+
+    batch_id = get_batch_id(
+        context
     )
 
     result = load_audit_validations(
-        csv_path=validation_file,
-        campaign_name=CURRENT_CAMPAIGN,
+        batch_id=batch_id
     )
 
     print(
-        "Validated audits updated:",
+        "Official statuses processed:",
+        result["total"],
+    )
+
+    print(
+        "Official statuses updated:",
         result["updated"],
     )
 
     print(
-        "Validation history created:",
-        result["history_created"],
-    )
-
-    print(
-        "Unchanged validations:",
+        "Official statuses unchanged:",
         result["unchanged"],
     )
 
 
 # =====================================================
-# Task 9 — dbt Models
+# Task 10 — dbt Models
 # =====================================================
 
 def run_dbt_models():
@@ -395,7 +431,7 @@ def run_dbt_models():
 
 
 # =====================================================
-# Task 10 — dbt Tests
+# Task 11 — dbt Tests
 # =====================================================
 
 def run_dbt_tests():
@@ -412,7 +448,8 @@ with DAG(
 
     description=(
         "End-to-end QHC ingestion, "
-        "Data Quality, PostgreSQL loading "
+        "Data Quality, PostgreSQL loading, "
+        "official audit status synchronization "
         "and dbt transformation pipeline"
     ),
 
@@ -431,6 +468,7 @@ with DAG(
         "quality",
         "postgresql",
         "data-quality",
+        "audit-status",
         "dbt",
     ],
 
@@ -473,7 +511,16 @@ with DAG(
     )
 
     # -------------------------------------------------
-    # Task 5 — Core Audits
+    # Task 5 — Official Audit Status Snapshot
+    # -------------------------------------------------
+
+    load_status_snapshot_task = PythonOperator(
+        task_id="load_audit_status_snapshot",
+        python_callable=load_audit_status_snapshot_task,
+    )
+
+    # -------------------------------------------------
+    # Task 6 — Core Audits
     # -------------------------------------------------
 
     load_audits_task = PythonOperator(
@@ -482,7 +529,7 @@ with DAG(
     )
 
     # -------------------------------------------------
-    # Task 6 — ISO Reference
+    # Task 7 — ISO Reference
     # -------------------------------------------------
 
     load_iso_task = PythonOperator(
@@ -491,7 +538,7 @@ with DAG(
     )
 
     # -------------------------------------------------
-    # Task 7 — Evaluations
+    # Task 8 — Evaluations
     # -------------------------------------------------
 
     load_evaluations_task = PythonOperator(
@@ -500,7 +547,7 @@ with DAG(
     )
 
     # -------------------------------------------------
-    # Task 8 — Official Validations
+    # Task 9 — Official Validations
     # -------------------------------------------------
 
     load_validations_task = PythonOperator(
@@ -509,7 +556,7 @@ with DAG(
     )
 
     # -------------------------------------------------
-    # Task 9 — dbt Run
+    # Task 10 — dbt Run
     # -------------------------------------------------
 
     dbt_models_task = PythonOperator(
@@ -518,7 +565,7 @@ with DAG(
     )
 
     # -------------------------------------------------
-    # Task 10 — dbt Test
+    # Task 11 — dbt Test
     # -------------------------------------------------
 
     dbt_tests_task = PythonOperator(
@@ -535,6 +582,7 @@ with DAG(
         >> run_data_quality_task
         >> load_staging_task
         >> load_dq_task
+        >> load_status_snapshot_task
         >> load_audits_task
         >> load_iso_task
         >> load_evaluations_task

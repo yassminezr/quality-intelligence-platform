@@ -4,3 +4,5 @@ pytest
 psycopg[binary]
 dbt-core==1.10.23
 dbt-postgres==1.10.0
+streamlit
+plotly

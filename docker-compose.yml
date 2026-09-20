@@ -122,6 +122,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+
+    container_name: qip_streamlit
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: quality_intelligence
+      POSTGRES_USER: qip_user
+      POSTGRES_PASSWORD: qip_password
+
+    ports:
+      - "8501:8501"
+
+    depends_on:
+      - postgres
+
+    restart: unless-stopped
 
 volumes:
   airflow-data:
