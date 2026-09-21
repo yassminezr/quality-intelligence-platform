@@ -3,7 +3,11 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
 
+dbt_packages/
+target/
+logs/
 # Environment variables / secrets
 .env
 
