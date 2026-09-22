@@ -1,45 +1,32 @@
 # Quality Intelligence Platform
 
-Plateforme Data end-to-end dédiée au pilotage des audits qualité, à l’analyse de la maturité, au suivi des findings et à la surveillance des actions correctives.
+> **End-to-end Quality Audit & Decision Platform** — from heterogeneous Excel audit workbooks to a governed PostgreSQL model, dbt analytics marts, Streamlit dashboards, automated corrective-action monitoring, FastAPI data products, CI/CD and Azure deployment.
 
-Le projet a été conçu à partir d’une mission réelle de stage autour des **Quality Health Checks (QHC)** et a été transformé en une plateforme complète combinant :
+---
+
+## Project overview
+
+The **Quality Intelligence Platform (QIP)** was built from a real internship use case around **Quality Health Checks (QHC)** and progressively transformed into a complete Data Engineering / Analytics Engineering platform.
+
+The initial business need was to centralize, clean, analyze and visualize quality audit data. The final platform goes much further by combining:
 
 - Data Engineering
 - Analytics Engineering
 - Data Quality
+- Data Modeling
 - Data Visualization
+- Monitoring & Escalation
 - API / Data Product
-- Monitoring automatisé
 - Docker
 - CI/CD
-- Cloud Azure
+- Azure Cloud
 
----
-
-## 1. Objectif du projet
-
-La Quality Intelligence Platform permet de :
-
-- centraliser les données d’audit issues de fichiers Excel multi-feuilles ;
-- standardiser et fiabiliser les données ;
-- historiser les évolutions ;
-- calculer des KPI qualité ;
-- analyser la maturité par compte et par clause ISO ;
-- suivre les findings et les actions correctives ;
-- surveiller automatiquement l’ancienneté des actions ;
-- déclencher des niveaux d’escalade ;
-- exposer les données via une API FastAPI ;
-- visualiser les résultats dans une application Streamlit ;
-- industrialiser le projet avec Docker, GitHub Actions et Azure.
-
----
-
-## 2. Architecture globale
+The platform covers the full lifecycle:
 
 ```text
 Excel / SharePoint
         ↓
-Python Ingestion
+Python ingestion
         ↓
 Apache Airflow
         ↓
@@ -49,187 +36,238 @@ PostgreSQL
         ↓
 dbt
         ↓
-Analytics Marts
+Analytics marts
      ↙      ↓       ↘
-Streamlit FastAPI Monitoring
+Streamlit FastAPI Monitoring Agent
         ↓
-Docker / CI
+Docker / GitHub Actions
         ↓
 Azure PostgreSQL + Azure Container Apps
 ```
 
 ---
 
-## 3. Stack technique
+# Key capabilities
 
-### Data Engineering
+The platform provides:
 
-- Python
-- Pandas
-- PostgreSQL
-- Apache Airflow
-- psycopg
-
-### Analytics Engineering
-
-- dbt
-- SQL
-- PostgreSQL analytics marts
-
-### Data Quality
-
-- contrôles de schéma
-- règles métier
-- contrôles de cohérence
-- gestion des niveaux WARNING / ERROR / BLOCKING
-
-### Data Visualization
-
-- Streamlit
-
-### API
-
-- FastAPI
-- Pydantic
-- Uvicorn
-- OpenAPI / Swagger
-- ReDoc
-
-### Monitoring
-
-- Python
-- moteur de règles déterministe
-- historique des changements de niveau
-- notifications email
-- intégration LLM optionnelle uniquement pour la rédaction
-
-### DevOps / Cloud
-
-- Docker
-- Docker Compose
-- GitHub Actions
-- Azure Database for PostgreSQL Flexible Server
-- Azure Container Registry
-- Azure Container Apps
+- automated ingestion of heterogeneous Excel audit sheets;
+- canonical schema normalization;
+- incremental and traceable loading;
+- data quality controls and business-rule validation;
+- historical and auditable PostgreSQL storage;
+- dbt analytics marts;
+- KPI calculation;
+- executive and operational Streamlit dashboards;
+- account-level and ISO clause-level analysis;
+- corrective-action ageing;
+- deterministic escalation monitoring;
+- change detection and idempotence;
+- monitoring run history;
+- SMTP notifications;
+- optional LLM-assisted message rewriting;
+- FastAPI REST endpoints;
+- automated tests;
+- GitHub Actions CI;
+- Dockerized local execution;
+- Azure PostgreSQL deployment;
+- FastAPI deployment on Azure Container Apps.
 
 ---
 
-## 4. Règles métier principales
+# Development roadmap
 
-### Statut audit proposé
-
-```text
-0 %        → non_audite
-> 0 et <65 → en_cours
->= 65 %    → audite
-```
-
-Le statut proposé est un indicateur d’aide à la décision.
-
-Le statut officiel reste le **statut validé par l’équipe Qualité**.
-
----
-
-### Ancienneté des actions correctives
-
-Pour une action ouverte :
+The project was developed through the following phases:
 
 ```text
-age_jours = date_du_jour - date_debut
-```
+Data Understanding & Profiling
 
-Pour une action clôturée :
-
-```text
-age_jours = date_cloture - date_debut
-```
-
-L’âge est figé après clôture.
-
----
-
-### Niveaux d’escalade
-
-```text
-0 – 30 jours   → Normal
-31 – 60 jours  → Alerte
-61 – 90 jours  → Critique
-> 90 jours     → Escalade management
-```
-
----
-
-### Findings
-
-Catégories gérées :
-
-```text
-NC Mineure
-NC Majeure
-Bonne Pratique
-OFI
-Observation
-NA
-```
-
-Le KPI **Total findings** exclut les Bonnes Pratiques.
-
----
-
-## 5. Modèle de données
-
-Principales entités :
-
-```text
-Campagne
-Compte
-Audit
-Clause ISO
-Contrôle attendu
-Évaluation
-Finding
-Action corrective
-Statut proposé / validé
-Historique
-Temps
-```
-
-Principales cardinalités :
-
-```text
-1 Campagne → plusieurs Audits
-1 Compte → 1 Audit par campagne
-1 Audit → plusieurs Évaluations
-1 Évaluation → 1 Finding
-1 Finding → 0..1 Action corrective
-```
-
----
-
-## 6. Pipeline Data
-
-Le pipeline principal suit les étapes :
-
-```text
-1. Ingestion Excel
-2. Normalisation
+1. Data Modeling
+2. Automated & Incremental Ingestion
 3. Data Quality
-4. Chargement staging
-5. Chargement PostgreSQL Core
-6. Historisation
-7. Chargement des statuts validés
-8. dbt run
-9. dbt tests
-10. Analytics marts
+4. PostgreSQL / Physical Modeling & Loading
+5. Analytics Engineering with dbt
+6. KPI & Streamlit
+7. Corrective Action Monitoring & Escalation Agent
+8. FastAPI & Data Product
+9. Docker, CI/CD & Azure
 ```
-
-Airflow orchestre le pipeline.
 
 ---
 
-## 7. Analytics marts
+# Data Understanding & Profiling
 
-Principaux marts dbt :
+The first stage focused on understanding the real audit workbook before implementing any architecture.
+
+Main work:
+
+- audit-sheet identification;
+- schema-variant detection;
+- profiling of maturity scores;
+- profiling of findings and corrective actions;
+- missing-value analysis;
+- date consistency analysis;
+- business-rule clarification;
+- canonical field mapping;
+- confirmation of analytical granularity.
+
+Dataset characteristics included:
+
+```text
+20 audit accounts
+45 source rows per account
+37 real ISO clauses / controls
+multiple schema variants
+heterogeneous date and status columns
+```
+
+Confirmed analytical grain:
+
+```text
+1 row = 1 account × 1 ISO clause
+```
+
+This profiling phase was essential to avoid designing the platform around incorrect assumptions.
+
+---
+
+# 1. Data Modeling
+
+The spreadsheet structure was transformed into a normalized and traceable data model.
+
+Main entities:
+
+```text
+Campaign
+Account
+Audit
+ISO Clause
+Expected Control
+Evaluation
+Finding
+Corrective Action
+Validated Audit Status
+History
+Time
+```
+
+Main relationships:
+
+```text
+1 Account → 1 Audit per Campaign
+1 Audit → many Evaluations
+1 Evaluation → 1 Finding
+1 Finding → 0..1 Corrective Action
+```
+
+The model separates:
+
+- reference data;
+- audit results;
+- findings;
+- corrective actions;
+- validated statuses;
+- historical changes.
+
+This prevents mixing expected ISO controls with operational audit results.
+
+---
+
+# 2. Automated & Incremental Ingestion
+
+A Python ingestion pipeline standardizes heterogeneous Excel sheets.
+
+Main responsibilities:
+
+- sheet detection;
+- source-column mapping;
+- normalization;
+- canonical schema creation;
+- source traceability;
+- incremental loading preparation;
+- reusable ingestion logic.
+
+Flow:
+
+```text
+Excel workbook
+    ↓
+Python ingestion
+    ↓
+schema normalization
+    ↓
+standardized dataset
+    ↓
+PostgreSQL staging
+```
+
+The ingestion is orchestrated by **Apache Airflow**.
+
+---
+
+# 3. Data Quality
+
+A dedicated Data Quality layer validates incoming data before downstream consumption.
+
+Checks include:
+
+- schema conformity;
+- required fields;
+- maturity-score validity;
+- finding-category validity;
+- date consistency;
+- corrective-action consistency;
+- duplicates;
+- status consistency;
+- business-rule validation.
+
+Severity policy:
+
+```text
+WARNING  → continue + report
+ERROR    → continue + report + correction expected
+BLOCKING → stop pipeline
+```
+
+This prevents poor source quality from silently propagating into analytics.
+
+---
+
+# 4. PostgreSQL / Physical Modeling & Loading
+
+PostgreSQL is the central persistence layer.
+
+Logical schemas include:
+
+```text
+metadata
+staging
+quality
+core
+analytics
+monitoring
+```
+
+The physical model supports:
+
+- technical IDs;
+- business keys;
+- source traceability;
+- immutable source preservation;
+- audit status validation;
+- evaluation history;
+- monitoring history;
+- analytics-ready consumption.
+
+This provides both operational reliability and auditability.
+
+---
+
+# 5. Analytics Engineering with dbt
+
+dbt transforms the core model into reusable analytics datasets.
+
+Main marts:
 
 ```text
 analytics.mart_audit_overview
@@ -241,92 +279,197 @@ analytics.mart_monitoring_runs
 analytics.mart_action_monitoring_history
 ```
 
+The dbt layer provides:
+
+- modular SQL transformations;
+- documented analytics logic;
+- tests;
+- separation between core storage and reporting logic;
+- stable datasets for Streamlit and FastAPI.
+
+The account-clause mart preserves the grain:
+
+```text
+1 account × 1 ISO clause
+```
+
 ---
 
-## 8. Streamlit
+# 6. KPI & Streamlit
 
-L’application Streamlit est accessible localement sur :
+A Streamlit application was built as the decision-support interface for the Quality team.
+
+Main pages:
+
+```text
+Executive Summary
+Maturity & Performance
+Findings & Actions
+Account Detail
+Monitoring & Escalations
+```
+
+Main KPIs:
+
+- planned audits;
+- audited accounts;
+- audits in progress;
+- non-audited accounts;
+- audit progress rate;
+- average maturity score;
+- total findings;
+- major non-conformities;
+- open corrective actions;
+- critical actions;
+- escalations.
+
+Local URL:
 
 ```text
 http://localhost:8501
 ```
 
-Pages principales :
-
-```text
-Synthèse Executive
-Maturité & Performance
-Findings & Actions
-Détail Compte
-Monitoring & Escalades
-```
-
-Principaux KPI :
-
-```text
-comptes audités
-comptes en cours
-comptes non audités
-% avancement
-score moyen de maturité
-total findings
-NC majeures
-actions ouvertes
-actions critiques
-escalades
-```
+The dashboard supports both executive and operational analysis.
 
 ---
 
-## 9. Monitoring des actions correctives
+# 7. Corrective Action Monitoring & Escalation Agent
 
-Le moteur de monitoring :
+One of the strongest components of the project is the automated monitoring engine for corrective actions.
+
+The objective is not only to display actions, but to continuously evaluate their ageing and detect when an escalation level changes.
+
+## Core capabilities
 
 ```text
-PostgreSQL
-    ↓
-lecture actions
-    ↓
-calcul age_jours
-    ↓
+✅ deterministic rule engine
+✅ corrective-action age calculation
+✅ escalation-level classification
+✅ change detection
+✅ idempotence
+✅ business logs
+✅ monitoring run history
+✅ deterministic messages
+✅ optional LLM rewriting
+✅ SMTP email notifications
+✅ Airflow orchestration
+✅ PostgreSQL integration
+✅ dbt staging
+✅ dbt marts
+✅ dbt tests
+✅ Python tests
+✅ dedicated Streamlit page
+✅ Docker hardening
+✅ end-to-end validation
+```
+
+## Age calculation
+
+For an open action:
+
+```text
+age_jours = current_date - date_debut
+```
+
+For a closed action:
+
+```text
+age_jours = date_cloture - date_debut
+```
+
+Once closed, the age is frozen.
+
+## Escalation levels
+
+```text
+0–30 days   → Normal
+31–60 days  → Alert
+61–90 days  → Critical
+>90 days    → Management Escalation
+```
+
+## Change detection & idempotence
+
+The engine compares the current level with the last historical level.
+
+An event is created only when the level changes.
+
+Example:
+
+```text
+Alert
+  ↓
+Critical
+  ↓
+Monitoring event
+```
+
+This prevents repeated alerts for an unchanged state.
+
+## Persistence
+
+Dedicated monitoring structures:
+
+```text
+monitoring.action_monitoring_log
+monitoring.monitoring_run_log
+```
+
+They preserve:
+
+- action monitoring history;
+- detected level changes;
+- run start/end timestamps;
+- run status;
+- actions evaluated;
+- events detected;
+- messages prepared;
+- emails sent;
+- failed notifications;
+- execution duration.
+
+## Optional LLM
+
+The LLM is intentionally restricted.
+
+It never decides:
+
+```text
+age calculation
 classification
-    ↓
-détection changement de niveau
-    ↓
-historisation
-    ↓
-préparation message
-    ↓
-notification optionnelle
+escalation level
+change detection
 ```
 
-Le moteur est déterministe.
+It may only rewrite a deterministic message for communication.
 
-Le LLM, lorsqu’il est activé, ne décide jamais du niveau d’escalade. Il sert uniquement à reformuler les messages.
+This keeps the monitoring logic explainable, testable and auditable.
 
 ---
 
-## 10. FastAPI
+# 8. FastAPI & Data Product
 
-L’API est accessible localement sur :
+The analytics layer is exposed as a reusable REST API.
+
+Local API:
 
 ```text
 http://localhost:8000
 ```
 
-Swagger :
+Swagger:
 
 ```text
 http://localhost:8000/docs
 ```
 
-ReDoc :
+ReDoc:
 
 ```text
 http://localhost:8000/redoc
 ```
 
-Principaux endpoints :
+Main endpoints:
 
 ```text
 GET /health
@@ -346,74 +489,27 @@ GET /api/v1/monitoring/runs
 GET /api/v1/monitoring/history
 ```
 
-L’API inclut :
+The API includes:
 
-- schémas Pydantic ;
-- validation des paramètres ;
-- filtres ;
-- pagination légère ;
-- erreurs HTTP 400 / 404 / 422 ;
-- versioning `/api/v1`.
+- Pydantic contracts;
+- parameter validation;
+- HTTP 400 / 404 / 422 handling;
+- filters;
+- lightweight pagination;
+- `/api/v1` versioning;
+- OpenAPI documentation.
 
----
-
-## 11. Tests
-
-Le projet contient des tests couvrant notamment :
-
-- Data Quality ;
-- ingestion ;
-- monitoring ;
-- escalade ;
-- notifications ;
-- historisation ;
-- hash ;
-- API FastAPI.
-
-Résultat final du pipeline CI :
-
-```text
-103 tests exécutés
-103 tests passés
-```
+This turns the analytics layer into a true **Data Product** and avoids direct database access for consumers.
 
 ---
 
-## 12. CI avec GitHub Actions
+# 9. Docker, CI/CD & Azure
 
-Le workflow CI est défini dans :
+The final phase industrialized the platform.
 
-```text
-.github/workflows/ci.yml
-```
+## Docker
 
-Il se déclenche sur :
-
-```text
-push sur main
-pull request vers main
-```
-
-Étapes principales :
-
-```text
-Checkout
-Setup Python
-Install dependencies
-Start PostgreSQL
-Initialize API test database
-Install dbt
-dbt debug
-dbt deps
-dbt parse
-pytest
-```
-
----
-
-## 13. Docker
-
-Services Docker :
+Main services:
 
 ```text
 postgres
@@ -424,119 +520,178 @@ streamlit
 api
 ```
 
-Lancement global :
+Start locally:
 
 ```powershell
 docker compose up -d
 ```
 
-Vérification :
+Check:
 
 ```powershell
 docker compose ps
 ```
 
-Arrêt :
+---
 
-```powershell
-docker compose down
+## GitHub Actions CI
+
+The CI pipeline runs on:
+
+```text
+push to main
+pull request to main
+```
+
+Main steps:
+
+```text
+Checkout
+Python setup
+Install dependencies
+Start PostgreSQL
+Initialize API test database
+Install dbt
+dbt debug
+dbt deps
+dbt parse
+pytest
+```
+
+Final CI result:
+
+```text
+103 tests executed
+103 tests passed
+```
+
+Tests cover major parts of the platform including:
+
+```text
+Data Quality
+ingestion
+monitoring
+escalation
+notifications
+history
+hash logic
+FastAPI
 ```
 
 ---
 
-## 14. Configuration
+## Azure deployment
 
-Créer un fichier `.env` à partir de :
+The project includes a real cloud deployment.
 
-```text
-.env.example
-```
-
-Variables principales :
+### Azure Database for PostgreSQL
 
 ```text
-POSTGRES_HOST
-POSTGRES_PORT
-POSTGRES_DB
-POSTGRES_USER
-POSTGRES_PASSWORD
-
-OPENAI_API_KEY
-OPENAI_MODEL
-LLM_ENABLED
-
-SMTP_HOST
-SMTP_PORT
-SMTP_USERNAME
-SMTP_PASSWORD
-SMTP_SENDER_EMAIL
-SMTP_USE_TLS
-
-QIP_RECIPIENT_ALERT
-QIP_RECIPIENT_CRITICAL
-QIP_RECIPIENT_MANAGEMENT
-
-EMAIL_NOTIFICATIONS_ENABLED
-```
-
-Le fichier `.env` ne doit jamais être versionné.
-
----
-
-## 15. Déploiement Azure
-
-La partie cloud comprend :
-
-```text
-Azure Resource Group
 Azure Database for PostgreSQL Flexible Server
-Azure Container Registry
-Azure Container Apps
+PostgreSQL 16
+Database: quality_intelligence
+TLS connection validated
 ```
 
-Architecture :
-
-```text
-Azure Resource Group
-│
-├── Azure PostgreSQL
-│     └── quality_intelligence
-│
-├── Azure Container Registry
-│     └── qip-api:v1
-│
-└── Azure Container Apps
-      └── qip-api
-            ↓
-      Azure PostgreSQL
-```
-
-La base locale a été migrée vers Azure via :
+The local database was migrated with:
 
 ```text
 pg_dump
 pg_restore
 ```
 
-Validation :
+Validation:
 
 ```text
-analytics.mart_audit_overview → 20 comptes
+analytics.mart_audit_overview → 20 accounts
 ```
 
-FastAPI a été déployée sur Azure Container Apps.
+### Azure Container Registry
 
-Endpoints cloud validés :
+FastAPI image:
 
 ```text
-/health
-/docs
-/health/db
+qip-api:v1
+```
+
+was pushed to Azure Container Registry.
+
+### Azure Container Apps
+
+FastAPI was deployed publicly through Azure Container Apps.
+
+Validated endpoints:
+
+```text
+/health      ✅
+/docs        ✅
+/health/db   ✅
+```
+
+Cloud flow:
+
+```text
+Azure Container Apps
+        ↓
+FastAPI
+        ↓
+Azure PostgreSQL
+        ↓
+Analytics marts
 ```
 
 ---
 
-## 16. Structure principale du repository
+# Main business rules
+
+## Audit status
+
+The platform distinguishes:
+
+```text
+statut_propose
+statut_valide
+```
+
+Proposal rule:
+
+```text
+0% completion        → non_audite
+>0% and <65%         → en_cours
+>=65%                → audite
+```
+
+The validated status remains the official source of truth.
+
+## Findings
+
+Supported categories:
+
+```text
+NC Mineure
+NC Majeure
+Bonne Pratique
+OFI
+Observation
+NA
+```
+
+The **Total Findings** KPI excludes `Bonne Pratique`.
+
+## Corrective actions
+
+A corrective action exists only when a finding requires treatment.
+
+Examples:
+
+```text
+Bonne Pratique → action optional
+NA             → no corrective action
+```
+
+---
+
+# Repository structure
 
 ```text
 quality-intelligence-platform/
@@ -566,6 +721,10 @@ quality-intelligence-platform/
 │   ├── api/
 │   └── fixtures/
 │
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml
@@ -578,38 +737,40 @@ quality-intelligence-platform/
 
 ---
 
-## 17. Lancement local rapide
+# Quick start
 
-### 1. Cloner le projet
+## 1. Clone
 
 ```powershell
 git clone <repository-url>
 cd quality-intelligence-platform
 ```
 
-### 2. Créer le fichier `.env`
+## 2. Configure environment
 
-Copier :
+Copy:
 
 ```text
 .env.example
 ```
 
-vers :
+to:
 
 ```text
 .env
 ```
 
-Puis renseigner les variables nécessaires.
+and fill the required values.
 
-### 3. Lancer la plateforme
+Never commit `.env`.
+
+## 3. Start the platform
 
 ```powershell
 docker compose up -d
 ```
 
-### 4. Vérifier les services
+## 4. Access services
 
 ```text
 Airflow   → http://localhost:8080
@@ -620,75 +781,134 @@ Swagger   → http://localhost:8000/docs
 
 ---
 
-## 18. Documentation
+# Testing
 
-Les rapports détaillés des différentes phases sont disponibles dans :
+Run the Python test suite:
+
+```powershell
+python -m pytest -v
+```
+
+Run API tests:
+
+```powershell
+python -m pytest tests/api/test_api.py -v
+```
+
+Validate dbt:
+
+```powershell
+cd analytics/qip_analytics
+dbt debug
+dbt deps
+dbt parse
+```
+
+---
+
+# Documentation
+
+Detailed phase reports are available in:
 
 ```text
 docs/
 ```
 
-Ils couvrent notamment :
+Coverage:
 
 ```text
-modélisation
-ingestion
+Data Understanding & Profiling
+Data Modeling
+Automated & Incremental Ingestion
 Data Quality
 PostgreSQL
-dbt
-Streamlit
-monitoring
-FastAPI
-Docker / CI/CD / Azure
+Analytics Engineering with dbt
+KPI & Streamlit
+Corrective Action Monitoring & Escalation Agent
+FastAPI & Data Product
+Docker, CI/CD & Azure
 ```
 
 ---
 
-## 19. Extensions futures
+# Why this project is valuable
 
-Évolutions possibles :
+This project goes beyond a classic dashboard or ETL pipeline.
+
+It combines:
 
 ```text
-déploiement Streamlit sur Azure
-déploiement Airflow sur Azure
+real business data
++
+data modeling
++
+orchestration
++
+data quality
++
+historization
++
+analytics engineering
++
+decision dashboards
++
+automated monitoring
++
+API productization
++
+testing
++
+CI/CD
++
+cloud deployment
+```
+
+The result is a complete Data Platform addressing both **analytical decision-making** and **operational quality monitoring**.
+
+---
+
+# Future improvements
+
+Possible extensions:
+
+```text
+Streamlit deployment on Azure
+Airflow deployment on managed cloud infrastructure
 Azure Key Vault
 private networking
 Azure Monitor
-CD automatique
+automatic CD to Azure Container Apps
+API authentication / RBAC
+advanced observability
 Quality AI Copilot
-authentification / rôles API
-cache API
-observabilité avancée
 ```
 
 ---
 
-## 20. Statut du projet
+# Project status
 
 ```text
 Quality Intelligence Platform — v1.0.0
 ```
 
-Statut :
-
 ```text
-✅ projet terminé
-✅ pipeline Data opérationnel
-✅ dashboards opérationnels
-✅ monitoring opérationnel
-✅ API opérationnelle
-✅ tests automatisés
-✅ CI verte
-✅ Docker opérationnel
-✅ PostgreSQL Azure déployé
-✅ FastAPI Azure déployée
+✅ Data pipeline operational
+✅ Data Quality operational
+✅ PostgreSQL model operational
+✅ dbt analytics layer operational
+✅ Streamlit dashboards operational
+✅ Monitoring & Escalation Agent operational
+✅ FastAPI Data Product operational
+✅ Docker environment operational
+✅ CI pipeline green
+✅ 103 automated tests passed
+✅ Azure PostgreSQL deployed
+✅ FastAPI deployed on Azure
 ```
 
 ---
 
-## 21. Auteur
-
-Projet réalisé dans le cadre d’un projet Data / stage ingénieur.
+# Author
 
 **Yassmine ZERAIDI**  
 ENSIAS — Génie de la Data
